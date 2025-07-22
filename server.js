@@ -1,9 +1,16 @@
 const express = require('express');
-const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app);
+
+const sslOptions = {
+  key: fs.readFileSync('/etc/letsencrypt/live/miaou.vps.webdock.cloud/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/miaou.vps.webdock.cloud/fullchain.pem')
+};
+
+const server = https.createServer(sslOptions, app);
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -46,7 +53,7 @@ io.on('connection', (socket) => {
     }
     socket.broadcast.to(data.sessionCode).emit('game_state_update', { action: data.action });
   });
-  
+
   socket.on('game_over', (data) => {
      if (!data || !data.sessionCode || typeof data.score === 'undefined') {
        return;
