@@ -1,16 +1,9 @@
 const express = require('express');
-const https = require('https');
-const fs = require('fs');
+const http = require('http');
 const { Server } = require("socket.io");
 
 const app = express();
-
-const sslOptions = {
-  key: fs.readFileSync('/etc/letsencrypt/live/miaou.vps.webdock.cloud/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/miaou.vps.webdock.cloud/fullchain.pem')
-};
-
-const server = https.createServer(sslOptions, app);
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
