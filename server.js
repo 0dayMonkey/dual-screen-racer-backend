@@ -3,9 +3,6 @@ const http = require('http');
 const { Server } = require("socket.io");
 
 const app = express();
-app.get('/ping', (req, res) => {
-  res.status(200).send('pong');
-});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -31,8 +28,7 @@ io.on('connection', (socket) => {
 
   socket.on('join_session', (data) => {
     if (!data || !data.sessionCode) {
-      socket.emit('invalid_session');
-      return;
+      socket.emit('invalid_session'); return;
     }
     const { sessionCode } = data;
     const roomExists = io.sockets.adapter.rooms.has(sessionCode);
@@ -44,17 +40,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('player_input', (data) => {
-    if (!data || !data.sessionCode || !data.action) {
-      return;
-    }
-    socket.broadcast.to(data.sessionCode).emit('game_state_update', { action: data.action });
+  socket.on('start_turn', (data) => {
+    if (!data || !data.sessionCode) return;
+    socket.broadcast.to(data.sessionCode).emit('start_turn', { direction: data.direction });
+  });
+
+  socket.on('stop_turn', (data) => {
+    if (!data || !data.sessionCode) return;
+    socket.broadcast.to(data.sessionCode).emit('stop_turn');
   });
 
   socket.on('game_over', (data) => {
-     if (!data || !data.sessionCode || typeof data.score === 'undefined') {
-       return;
-     }
+     if (!data || !data.sessionCode || typeof data.score === 'undefined') return;
      io.to(data.sessionCode).emit('game_over', { score: data.score });
      io.sockets.in(data.sessionCode).sockets.forEach(clientSocket => {
         clientSocket.leave(data.sessionCode);
@@ -62,5 +59,4 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-});
+server.listen(PORT, () => {});
