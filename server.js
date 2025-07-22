@@ -3,6 +3,10 @@ const http = require('http');
 const { Server } = require("socket.io");
 
 const app = express();
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
