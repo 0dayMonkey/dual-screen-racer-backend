@@ -27,4 +27,4 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm install --omit=dev
-            pm2 reload dual-screen-racer-backend
+            pm2 restart dual-screen-racer-backend || pm2 start npm --name "dual-screen-racer-backend" -- run start
