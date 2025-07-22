@@ -1,0 +1,30 @@
+name: Déploiement sur VPS
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Déploiement sur le VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }} 
+          port: ${{ secrets.VPS_PORT || 22 }}
+
+          # Le script reste identique
+          script: |
+            cd /var/www/dual-screen-racer-backend
+            git fetch origin main
+            git reset --hard origin/main
+            npm install --omit=dev
+            pm2 reload dual-screen-racer-backend
