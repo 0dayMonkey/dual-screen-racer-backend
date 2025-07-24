@@ -12,16 +12,14 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 8888;
-let activeSessions = new Set(); // Utilise un Set pour éviter les doublons
+let activeSessions = new Set();
 
 function generateSessionCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 io.on('connection', (socket) => {
-  // Nouvelle fonctionnalité : Envoyer les sessions actives à une manette qui le demande
   socket.on('request_active_sessions', () => {
-    // Envoie la première session active trouvée (pour ce jeu simple, on suppose qu'il n'y en a qu'une)
     if (activeSessions.size > 0) {
       const firstSession = activeSessions.values().next().value;
       socket.emit('active_session_found', { sessionCode: firstSession });
@@ -30,13 +28,12 @@ io.on('connection', (socket) => {
 
   socket.on('create_session', () => {
     const sessionCode = generateSessionCode();
-    activeSessions.add(sessionCode); // Ajoute la session à la liste
+    activeSessions.add(sessionCode);
     socket.join(sessionCode);
     socket.emit('session_created', { sessionCode });
     
-    // Gérer la déconnexion de l'écran de jeu
     socket.on('disconnect', () => {
-        activeSessions.delete(sessionCode); // Retire la session de la liste
+        activeSessions.delete(sessionCode);
     });
   });
 
@@ -53,30 +50,29 @@ io.on('connection', (socket) => {
     }
   });
 
+  // NOUVEL ÉVÉNEMENT : Gère la demande de nouvelle partie
+  socket.on('request_replay', (data) => {
+    if (data && data.sessionCode) {
+        // Informe tous les clients de la session de recommencer
+        io.to(data.sessionCode).emit('start_new_game');
+    }
+  });
+
   socket.on('start_turn', (data) => {
-    if (!data || !data.sessionCode) return;
-    socket.broadcast.to(data.sessionCode).emit('start_turn', { direction: data.direction });
+    if (data && data.sessionCode) {
+        socket.broadcast.to(data.sessionCode).emit('start_turn', { direction: data.direction });
+    }
   });
 
   socket.on('stop_turn', (data) => {
-    if (!data || !data.sessionCode) return;
-    socket.broadcast.to(data.sessionCode).emit('stop_turn');
+    if (data && data.sessionCode) {
+        socket.broadcast.to(data.sessionCode).emit('stop_turn');
+    }
   });
 
   socket.on('game_over', (data) => {
      if (!data || !data.sessionCode || typeof data.score === 'undefined') return;
      io.to(data.sessionCode).emit('game_over', { score: data.score });
-     
-     const roomSockets = io.sockets.adapter.rooms.get(data.sessionCode);
-     if (roomSockets) {
-         roomSockets.forEach(socketId => {
-            const clientSocket = io.sockets.sockets.get(socketId);
-            if (clientSocket) {
-                clientSocket.leave(data.sessionCode);
-            }
-         });
-     }
-     activeSessions.delete(data.sessionCode);
   });
 });
 
