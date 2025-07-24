@@ -3,27 +3,41 @@ const http = require('http');
 const { Server } = require("socket.io");
 
 const app = express();
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://harib-naim.fr",
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
 
 const PORT = process.env.PORT || 8888;
+let activeSessions = new Set(); // Utilise un Set pour éviter les doublons
 
 function generateSessionCode() {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    return code;
+    return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 io.on('connection', (socket) => {
+  // Nouvelle fonctionnalité : Envoyer les sessions actives à une manette qui le demande
+  socket.on('request_active_sessions', () => {
+    // Envoie la première session active trouvée (pour ce jeu simple, on suppose qu'il n'y en a qu'une)
+    if (activeSessions.size > 0) {
+      const firstSession = activeSessions.values().next().value;
+      socket.emit('active_session_found', { sessionCode: firstSession });
+    }
+  });
+
   socket.on('create_session', () => {
     const sessionCode = generateSessionCode();
+    activeSessions.add(sessionCode); // Ajoute la session à la liste
     socket.join(sessionCode);
     socket.emit('session_created', { sessionCode });
+    
+    // Gérer la déconnexion de l'écran de jeu
+    socket.on('disconnect', () => {
+        activeSessions.delete(sessionCode); // Retire la session de la liste
+    });
   });
 
   socket.on('join_session', (data) => {
@@ -31,8 +45,7 @@ io.on('connection', (socket) => {
       socket.emit('invalid_session'); return;
     }
     const { sessionCode } = data;
-    const roomExists = io.sockets.adapter.rooms.has(sessionCode);
-    if (roomExists) {
+    if (activeSessions.has(sessionCode)) {
       socket.join(sessionCode);
       io.to(sessionCode).emit('connection_successful');
     } else {
@@ -53,10 +66,20 @@ io.on('connection', (socket) => {
   socket.on('game_over', (data) => {
      if (!data || !data.sessionCode || typeof data.score === 'undefined') return;
      io.to(data.sessionCode).emit('game_over', { score: data.score });
-     io.sockets.in(data.sessionCode).sockets.forEach(clientSocket => {
-        clientSocket.leave(data.sessionCode);
-     });
+     
+     const roomSockets = io.sockets.adapter.rooms.get(data.sessionCode);
+     if (roomSockets) {
+         roomSockets.forEach(socketId => {
+            const clientSocket = io.sockets.sockets.get(socketId);
+            if (clientSocket) {
+                clientSocket.leave(data.sessionCode);
+            }
+         });
+     }
+     activeSessions.delete(data.sessionCode);
   });
 });
 
-server.listen(PORT, () => {});
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
