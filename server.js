@@ -5,14 +5,12 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-// --- CORRECTION ---
-// La configuration de Socket.IO est modifiée pour être plus explicite et robuste.
+// --- CONFIGURATION CORRECTE ET FINALE ---
 const io = new Server(server, {
-  // 1. On définit un chemin explicite. Cela évite les ambiguïtés et les conflits.
+  // 1. On définit un chemin explicite pour éviter les conflits.
   path: "/racer/socket.io/",
   
   // 2. On configure CORS pour autoriser spécifiquement votre site web.
-  // C'est plus sécurisé que la valeur "*" et résout l'erreur que vous rencontrez.
   cors: {
     origin: "https://harib-naim.fr", 
     methods: ["GET", "POST"]
