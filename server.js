@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
       
       const newPlayer = {
         id: socket.id,
-        name: "Joueur $session.players.size +1}",
+        name: "Joueur ${session.players.size +1}",
         isReady: false,
         color: assignColor(sessionCode)
       };
