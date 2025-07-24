@@ -50,10 +50,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  // NOUVEL ÉVÉNEMENT : Gère la demande de nouvelle partie
   socket.on('request_replay', (data) => {
     if (data && data.sessionCode) {
-        // Informe tous les clients de la session de recommencer
         io.to(data.sessionCode).emit('start_new_game');
     }
   });
