@@ -15,8 +15,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 8888;
 
 function generateSessionCode() {
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return code;
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    return code;
 }
 
 io.on('connection', (socket) => {
