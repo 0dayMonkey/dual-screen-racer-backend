@@ -21,19 +21,13 @@ function generateSessionCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// --- DEBUT DE LA MODIFICATION ---
 function assignColor(sessionCode) {
     const session = activeSessions.get(sessionCode);
     if (!session) return '#FFFFFF';
 
-    // On utilise l'opérateur modulo (%) pour "boucler" sur le tableau de couleurs.
-    // Si on a 8 couleurs, le joueur 0 aura la couleur 0, le joueur 7 la couleur 7,
-    // et le joueur 8 aura la couleur 0 (8 % 8 = 0), etc.
     const playerIndex = session.players.size;
     return availableColors[playerIndex % availableColors.length];
 }
-// --- FIN DE LA MODIFICATION ---
-
 
 function checkAllReady(sessionCode) {
     const session = activeSessions.get(sessionCode);
@@ -152,6 +146,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Pour le mode Flèches
   socket.on('start_turn', (data) => {
     if (data && data.sessionCode) {
         socket.broadcast.to(data.sessionCode).emit('start_turn', { playerId: socket.id, direction: data.direction });
@@ -161,6 +156,13 @@ io.on('connection', (socket) => {
   socket.on('stop_turn', (data) => {
     if (data && data.sessionCode) {
         socket.broadcast.to(data.sessionCode).emit('stop_turn', { playerId: socket.id });
+    }
+  });
+
+  // Pour le mode Volant
+  socket.on('steer', (data) => {
+    if (data && data.sessionCode) {
+        socket.broadcast.to(data.sessionCode).emit('steer', { playerId: socket.id, angle: data.angle });
     }
   });
 
