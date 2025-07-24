@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
         const player = session.players.get(socket.id);
         player.isReady = true;
 
-        io.to(sessionCode).emit('player_status_updated', { playerId: socket.id, isReady: true });
+        io.to(sessionCode).emit('player_status_updated', { playerId: socket.id, isReady: true, name: player.name});
         
         if (checkAllReady(sessionCode)) {
             session.gameStarted = true;
