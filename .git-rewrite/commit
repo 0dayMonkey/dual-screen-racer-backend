@@ -1,6 +1,23 @@
-tree 3527826ad83b7f3541b0c3b461fd96c2e3a9ae3f
+tree c69d473a1a04ce3ec3e49cbbb85e498c014c9c41
 parent 51281e1dc773d78660cc8614bf993e437b0b5bc8
-author Harib Naïm <naim.harib@modulusgroup.eu> 1753199270 +0200
-committer Harib Naïm <naim.harib@modulusgroup.eu> 1753199270 +0200
+author Capri'☼ <95378035+0dayMonkey@users.noreply.github.com> 1753199103 +0200
+committer GitHub <noreply@github.com> 1753199103 +0200
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsFcBAABCAAQBQJof7H/CRC1aQ7uu5UhlAAAuUQQAAJn0PqWjqqLoEMQrcvbavdy
+ XCdOjXJwKAOgGThVgAlDooMttqsphQCaOAxYlUaYExERdPoiDIUSkBZsrR1lPcgZ
+ L+V/6WLk+PYSejnsKmzxrxkg7LuHKjKPRochM9zL2ZPRmEBqlNi7m2lSY88xCvC3
+ ISJFBoLpoPUIGb3FGpQ/D6Yjg18fhJi0qpk92I+0qDbpsX+iOD0x7i9MHjiQJrqE
+ irH6aNqgNxU+7dv7SclLt8fWjFfchpYZUZzcXtDYhZbVSuMAXSEuzUA0vKNzmhEv
+ EW4IpBLBe9zgr8KHxKL1/05p5zdMqLTddaEqm8bKDqhpdq/PsUc1lXtdWIDsbMsU
+ Roq4IusmldOzTdC0UIAqBvvoGYF3xjP7EClq0+5WQ9DK8qZ7t1VDyun2BimQnzsQ
+ 8LM0AChIwFl3PWT+OHtLlYj3iSq32aRJ/QGDJQDN3fe8XrE4PQGi1WGRp2CIgyQp
+ BLwjaJ6WsZz89kCnaFbZD/v15RIOmFUypudh/juHEbr5PqaGPhdf89GJ7q8XDBqt
+ eHKlKf+SDTGUzV4csyx/lXHQIGD1xu3wXDDLU9oEMJaWBjP1IlQ/+gPQ4JQEio98
+ wfzQSpX30fbezF9tFoaO6Gua4gyzXLO42dwzwp9ZpMSmGLn1j8bOVAWRtw5BSBd6
+ 0ejuZ49EvXW0t9J99Hd9
+ =NXsv
+ -----END PGP SIGNATURE-----
+ 
 
-delete 1 file and update 1 file
+Update main.yml
