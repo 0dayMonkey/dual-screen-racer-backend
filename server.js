@@ -5,12 +5,8 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-// --- CONFIGURATION CORRECTE ET FINALE ---
 const io = new Server(server, {
-  // 1. On définit un chemin explicite pour éviter les conflits.
   path: "/racer/socket.io/",
-  
-  // 2. On configure CORS pour autoriser spécifiquement votre site web.
   cors: {
     origin: "https://harib-naim.fr", 
     methods: ["GET", "POST"]
@@ -25,15 +21,19 @@ function generateSessionCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// --- DEBUT DE LA MODIFICATION ---
 function assignColor(sessionCode) {
     const session = activeSessions.get(sessionCode);
     if (!session) return '#FFFFFF';
 
-    const usedColors = new Set(Array.from(session.players.values()).map(p => p.color));
-    const freeColor = availableColors.find(color => !usedColors.has(color));
-    
-    return freeColor || '#FFFFFF';
+    // On utilise l'opérateur modulo (%) pour "boucler" sur le tableau de couleurs.
+    // Si on a 8 couleurs, le joueur 0 aura la couleur 0, le joueur 7 la couleur 7,
+    // et le joueur 8 aura la couleur 0 (8 % 8 = 0), etc.
+    const playerIndex = session.players.size;
+    return availableColors[playerIndex % availableColors.length];
 }
+// --- FIN DE LA MODIFICATION ---
+
 
 function checkAllReady(sessionCode) {
     const session = activeSessions.get(sessionCode);
