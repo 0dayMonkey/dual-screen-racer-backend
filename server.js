@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
       
       const newPlayer = {
         id: socket.id,
-        name: `Joueur ${session.players.size +1}`,
+        name: `Joueur ${session.players.size + 1}`,
         isReady: false,
         color: assignColor(sessionCode)
       };
@@ -101,6 +101,20 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('update_name', (data) => {
+    const { sessionCode, name } = data;
+    const session = activeSessions.get(sessionCode);
+    if (session && session.players.has(socket.id)) {
+      const player = session.players.get(socket.id);
+      player.name = name;
+
+      socket.broadcast.to(sessionCode).emit('player_name_updated', { 
+        playerId: socket.id, 
+        newName: name 
+      });
+    }
+  });
+
   socket.on('player_ready', (data) => {
     const { sessionCode } = data;
     const session = activeSessions.get(sessionCode);
@@ -108,7 +122,7 @@ io.on('connection', (socket) => {
         const player = session.players.get(socket.id);
         player.isReady = true;
 
-        io.to(sessionCode).emit('player_status_updated', { playerId: socket.id, isReady: true, name: player.name});
+        io.to(sessionCode).emit('player_status_updated', { playerId: socket.id, isReady: true });
         
         if (checkAllReady(sessionCode)) {
             session.gameStarted = true;
