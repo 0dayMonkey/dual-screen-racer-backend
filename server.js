@@ -5,10 +5,7 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-    path: "/racer/socket.io/",
-
-});
+const io = new Server(server, { path: "/racer/socket.io/" });
 
 const PORT = process.env.PORT || 8888;
 let activeSessions = new Map();
@@ -91,13 +88,6 @@ io.on('connection', (socket) => {
         });
         socket.join(sessionCode);
         socket.emit('session_created', { sessionCode });
-
-        socket.on('disconnect', () => {
-            const session = activeSessions.get(sessionCode);
-            if (session && session.players.size === 0) {
-                activeSessions.delete(sessionCode);
-            }
-        });
     });
 
     socket.on('reconnect_host', (data) => {
@@ -110,38 +100,25 @@ io.on('connection', (socket) => {
                 sessionCode: sessionCode,
                 players: Array.from(session.players.values())
             });
-            socket.on('disconnect', () => {});
         } else {
             socket.emit('session_not_found');
         }
     });
 
-
     socket.on('join_session', (data) => {
-        if (!data || !data.sessionCode) {
-            socket.emit('invalid_session');
-            return;
-        }
+        if (!data || !data.sessionCode) return;
         const { sessionCode } = data;
         const session = activeSessions.get(sessionCode);
         
-        if (!session) {
-            socket.emit('invalid_session', { message: 'Session non trouvée.' });
-            return;
-        }
-
-        if (session.players.size >= 10) {
-            socket.emit('invalid_session', { message: 'La session est pleine.' });
-            return;
-        }
-        
-        if (session.gameStarted) {
-            socket.emit('invalid_session', { message: 'La partie a déjà commencé.' });
+        if (!session || session.players.size >= 10 || session.gameStarted) {
+            let message = 'Session non trouvée.';
+            if(session && session.players.size >= 10) message = 'La session est pleine.';
+            if(session && session.gameStarted) message = 'La partie a déjà commencé.';
+            socket.emit('invalid_session', { message });
             return;
         }
 
         socket.join(sessionCode);
-
         const newPlayer = {
             id: socket.id,
             name: `Joueur ${session.players.size + 1}`,
@@ -149,13 +126,9 @@ io.on('connection', (socket) => {
             color: getRandomColor(sessionCode),
             wantsToReplay: false
         };
-
         session.players.set(socket.id, newPlayer);
 
-        socket.emit('lobby_joined', {
-            playerId: newPlayer.id,
-            players: Array.from(session.players.values())
-        });
+        socket.emit('lobby_joined', { playerId: newPlayer.id });
         socket.broadcast.to(sessionCode).emit('player_joined', newPlayer);
     });
 
@@ -206,13 +179,11 @@ io.on('connection', (socket) => {
         const session = activeSessions.get(sessionCode);
         if (session && session.players.has(socket.id)) {
             const player = session.players.get(socket.id);
-
             const nameExists = Array.from(session.players.values()).some(p => p.id !== socket.id && p.name === name);
             if (nameExists) {
                 socket.emit('name_already_taken');
                 return;
             }
-
             player.name = name;
             socket.broadcast.to(sessionCode).emit('player_name_updated', { playerId: socket.id, newName: name });
         }
@@ -220,11 +191,9 @@ io.on('connection', (socket) => {
 
     socket.on('game_over', (data) => {
         if (!data || !data.sessionCode || typeof data.score === 'undefined') return;
-
         const session = activeSessions.get(data.sessionCode);
         if (session && !session.lobbyReturnTimer) {
             io.to(data.sessionCode).emit('game_over', { score: data.score });
-
             session.lobbyReturnTimer = setTimeout(() => {
                 returnSessionToLobby(data.sessionCode);
             }, 30000);
@@ -232,19 +201,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('start_turn', (data) => {
-        if (data && data.sessionCode) {
-            socket.broadcast.to(data.sessionCode).emit('start_turn', { playerId: socket.id, direction: data.direction });
-        }
+        if (data && data.sessionCode) socket.broadcast.to(data.sessionCode).emit('start_turn', { playerId: socket.id, direction: data.direction });
     });
     socket.on('stop_turn', (data) => {
-        if (data && data.sessionCode) {
-            socket.broadcast.to(data.sessionCode).emit('stop_turn', { playerId: socket.id });
-        }
+        if (data && data.sessionCode) socket.broadcast.to(data.sessionCode).emit('stop_turn', { playerId: socket.id });
     });
     socket.on('steer', (data) => {
-        if (data && data.sessionCode) {
-            socket.broadcast.to(data.sessionCode).emit('steer', { playerId: socket.id, angle: data.angle });
-        }
+        if (data && data.sessionCode) socket.broadcast.to(data.sessionCode).emit('steer', { playerId: socket.id, angle: data.angle });
     });
 });
 
