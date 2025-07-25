@@ -71,15 +71,14 @@ function checkAllWantReplay(sessionCode) {
 
 io.on('connection', (socket) => {
     socket.on('request_active_sessions', () => {
-        if (activeSessions.size > 0) {
-            const firstSessionKey = Array.from(activeSessions.keys()).find(key => {
-                const session = activeSessions.get(key);
-                return !session.gameStarted && session.players.size < 10;
-            });
-            if (firstSessionKey) {
-                socket.emit('active_session_found', { sessionCode: firstSessionKey });
-            }
-        }
+        const openSessions = Array.from(activeSessions.entries())
+            .filter(([key, session]) => !session.gameStarted && session.players.size < 10)
+            .map(([key, session]) => ({
+                sessionCode: key,
+                playerCount: session.players.size
+            }));
+        
+        socket.emit('available_sessions_list', openSessions);
     });
 
     socket.on('create_session', () => {
