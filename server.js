@@ -47,16 +47,21 @@ function returnSessionToLobby(sessionCode) {
 
 function checkAllWantReplay(sessionCode) {
     const session = activeSessions.get(sessionCode);
-    if (!session || session.players.size === 0) {
-        if (session && session.lobbyReturnTimer) {
+    if (!session) return;
+
+    if (session.players.size === 0) {
+        if (session.lobbyReturnTimer) {
             clearTimeout(session.lobbyReturnTimer);
         }
+        returnSessionToLobby(sessionCode);
+        
         setTimeout(() => {
             if (activeSessions.has(sessionCode) && activeSessions.get(sessionCode).players.size === 0) {
                 activeSessions.delete(sessionCode);
+                console.log(`Session ${sessionCode} fermée car vide.`);
             }
-        }, 60000);
-        return false;
+        }, 5000); 
+        return; 
     }
 
     const allPlayersWantReplay = Array.from(session.players.values()).every(player => player.wantsToReplay);
