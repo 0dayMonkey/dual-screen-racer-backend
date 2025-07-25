@@ -15,7 +15,7 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 8888;
 let activeSessions = new Map();
-const availableColors = ['#FF4136', '#60686eff', '#2ECC40', '#FFDC00', '#B10DC9', '#FF851B', '#7FDBFF', '#F012BE'];
+const availableColors = ['#FF4136', '#0074D9', '#2ECC40', '#FFDC00', '#B10DC9', '#FF851B', '#7FDBFF', '#F012BE'];
 
 function generateSessionCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
