@@ -7,15 +7,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     path: "/racer/socket.io/",
-    cors: {
-        origin: "https://harib-naim.fr",
-        methods: ["GET", "POST"]
-    }
+
 });
 
 const PORT = process.env.PORT || 8888;
 let activeSessions = new Map();
-const availableColors = ['#FF4136', '#0074D9', '#2ECC40', '#FFDC00', '#B10DC9', '#FF851B', '#7FDBFF', '#F012BE'];
+const availableColors = ['#FF4136', '#0074D9', '#2ECC40', '#FFDC00', '#B10DC9', '#FF851B', '#7FDBFF', '#F012BE', '#AAAAAA', '#01FF70'];
 
 function generateSessionCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,14 +20,15 @@ function generateSessionCode() {
 
 function getRandomColor(sessionCode) {
     const session = activeSessions.get(sessionCode);
-    if (!session) return availableColors.sort(() => Math.random() - 0.5)[0]; // Retourne une couleur aléatoire si la session n'existe pas (devrait pas arriver)
+    if (!session) return availableColors[Math.floor(Math.random() * availableColors.length)];
 
-    let available = availableColors.filter(color => !Array.from(session.players.values()).some(p => p.color === color));
+    let usedColors = new Set(Array.from(session.players.values()).map(p => p.color));
+    let available = availableColors.filter(color => !usedColors.has(color));
+    
     if (available.length === 0) {
-        // Si toutes les couleurs sont prises (cas improbable avec 8 couleurs et peu de joueurs), on en prend une au hasard quand même
-        return availableColors.sort(() => Math.random() - 0.5)[0];
+        return availableColors[Math.floor(Math.random() * availableColors.length)];
     }
-    return available.sort(() => Math.random() - 0.5)[0];
+    return available[Math.floor(Math.random() * available.length)];
 }
 
 function returnSessionToLobby(sessionCode) {
@@ -74,7 +72,10 @@ function checkAllWantReplay(sessionCode) {
 io.on('connection', (socket) => {
     socket.on('request_active_sessions', () => {
         if (activeSessions.size > 0) {
-            const firstSessionKey = Array.from(activeSessions.keys()).find(key => !activeSessions.get(key).gameStarted);
+            const firstSessionKey = Array.from(activeSessions.keys()).find(key => {
+                const session = activeSessions.get(key);
+                return !session.gameStarted && session.players.size < 10;
+            });
             if (firstSessionKey) {
                 socket.emit('active_session_found', { sessionCode: firstSessionKey });
             }
@@ -124,28 +125,39 @@ io.on('connection', (socket) => {
         }
         const { sessionCode } = data;
         const session = activeSessions.get(sessionCode);
-
-        if (session && !session.gameStarted) {
-            socket.join(sessionCode);
-
-            const newPlayer = {
-                id: socket.id,
-                name: `Joueur ${session.players.size + 1}`,
-                isReady: false,
-                color: getRandomColor(sessionCode), // Couleur aléatoire
-                wantsToReplay: false
-            };
-
-            session.players.set(socket.id, newPlayer);
-
-            socket.emit('lobby_joined', {
-                playerId: newPlayer.id,
-                players: Array.from(session.players.values())
-            });
-            socket.broadcast.to(sessionCode).emit('player_joined', newPlayer);
-        } else {
-            socket.emit('invalid_session');
+        
+        if (!session) {
+            socket.emit('invalid_session', { message: 'Session non trouvée.' });
+            return;
         }
+
+        if (session.players.size >= 10) {
+            socket.emit('invalid_session', { message: 'La session est pleine.' });
+            return;
+        }
+        
+        if (session.gameStarted) {
+            socket.emit('invalid_session', { message: 'La partie a déjà commencé.' });
+            return;
+        }
+
+        socket.join(sessionCode);
+
+        const newPlayer = {
+            id: socket.id,
+            name: `Joueur ${session.players.size + 1}`,
+            isReady: false,
+            color: getRandomColor(sessionCode),
+            wantsToReplay: false
+        };
+
+        session.players.set(socket.id, newPlayer);
+
+        socket.emit('lobby_joined', {
+            playerId: newPlayer.id,
+            players: Array.from(session.players.values())
+        });
+        socket.broadcast.to(sessionCode).emit('player_joined', newPlayer);
     });
 
     socket.on('player_ready', (data) => {
@@ -196,10 +208,9 @@ io.on('connection', (socket) => {
         if (session && session.players.has(socket.id)) {
             const player = session.players.get(socket.id);
 
-            // Vérification si le pseudo existe déjà
             const nameExists = Array.from(session.players.values()).some(p => p.id !== socket.id && p.name === name);
             if (nameExists) {
-                socket.emit('name_already_taken'); // Vous pouvez émettre un événement pour informer le client
+                socket.emit('name_already_taken');
                 return;
             }
 
@@ -217,7 +228,7 @@ io.on('connection', (socket) => {
 
             session.lobbyReturnTimer = setTimeout(() => {
                 returnSessionToLobby(data.sessionCode);
-            }, 30000); // 30 secondes
+            }, 30000);
         }
     });
 
