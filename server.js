@@ -7,10 +7,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   path: "/racer/socket.io/",
-  cors: {
-    origin: "https://harib-naim.fr", 
-    methods: ["GET", "POST"]
-  }
+  
 });
 
 const PORT = process.env.PORT || 8888;
